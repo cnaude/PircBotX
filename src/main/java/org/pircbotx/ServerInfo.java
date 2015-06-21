@@ -1,19 +1,20 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx;
 
@@ -24,17 +25,15 @@ import java.util.StringTokenizer;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- * This is a giant info bean of various things about the server. This is
- * separate from the {@link PircBotX} class due to its length
+ * This is a giant info bean of various things about the server. This is separate
+ * from the {@link PircBotX} class due to its length
  * <p/>
- * Most info thanks to <a href="www.irc.org/tech_docs/005.html">this great
- * website
+ * Most info thanks to <a href="www.irc.org/tech_docs/005.html">this great website
  * </a> on what each one does
  *
- * @author Leon Blakey
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
 @Data
 @Setter(AccessLevel.NONE)
@@ -45,7 +44,7 @@ public class ServerInfo {
 	protected String serverVersion;
 	protected String userModes;
 	//005 information
-	protected LinkedHashMap<String, String> isupportRaw = new LinkedHashMap<String, String>();
+	protected LinkedHashMap<String, String> isupportRaw = new LinkedHashMap<>();
 	protected String prefixes;
 	protected String channelTypes;
 	protected String channelModes;
@@ -87,8 +86,6 @@ public class ServerInfo {
 	protected boolean callerID;
 	protected boolean accept;
 	protected String language;
-	protected String extBanPrefix;
-	protected String extBanList;
 	//Other information
 	@Setter(AccessLevel.PROTECTED)
 	protected String motd;
@@ -113,10 +110,10 @@ public class ServerInfo {
 
 	protected void parse004(List<String> parsedLine) {
 		//004 PircBotX pratchett.freenode.net ircd-seven-1.1.3 DOQRSZaghilopswz CFILMPQbcefgijklmnopqrstvz bkloveqjfI
-		serverName = Utils.tryGetIndex(parsedLine, 1, null);
-		serverVersion = Utils.tryGetIndex(parsedLine, 2, null);
-		userModes = Utils.tryGetIndex(parsedLine, 3, null);
-		channelModes = Utils.tryGetIndex(parsedLine, 4, null);
+		serverName = parsedLine.get(1);
+		serverVersion = parsedLine.get(2);
+		userModes = parsedLine.get(3);
+		channelModes = parsedLine.get(4);
 	}
 
 	protected void parse005(List<String> parsedLine) {
@@ -198,21 +195,6 @@ public class ServerInfo {
 				userIPExists = true;
 			else if (key.equalsIgnoreCase("CNOTICE"))
 				cNoticeExists = true;
-			else if (key.equalsIgnoreCase("EXTBAN")) {
-				if (value.contains(",")) {
-					String[] valueSplit = StringUtils.split(value, ",", 2);
-					if (valueSplit.length == 2) {
-						extBanPrefix = valueSplit[0];
-						extBanList = valueSplit[1];
-					} else {
-						extBanPrefix = null;
-						extBanList = valueSplit[0];
-					}
-				} else {
-					extBanList = value;
-				}
-			}
-
 		}
 		//Freenode
 		//005 PircBotX CHANTYPES=# EXCEPTS INVEX CHANMODES=eIbq,k,flj,CFLMPQcgimnprstz CHANLIMIT=#:120 PREFIX=(ov)@+ MAXLIST=bqeI:100 MODES=4 NETWORK=freenode KNOCK STATUSMSG=@+ CALLERID=g :are supported by this server
@@ -221,17 +203,12 @@ public class ServerInfo {
 		//Rizon
 		//005 PircBotX CALLERID CASEMAPPING=rfc1459 DEAF=D KICKLEN=160 MODES=4 NICKLEN=30 TOPICLEN=390 PREFIX=(qaohv)~&@%+ STATUSMSG=~&@%+ NETWORK=Rizon MAXLIST=beI:100 TARGMAX=ACCEPT:,KICK:1,LIST:1,NAMES:1,NOTICE:4,PRIVMSG:4,WHOIS:1 CHANTYPES=# :are supported by this server
 		//005 PircBotX CHANLIMIT=#:75 CHANNELLEN=50 CHANMODES=beI,k,l,BCMNORScimnpstz AWAYLEN=160 ELIST=CMNTU SAFELIST KNOCK NAMESX UHNAMES FNC EXCEPTS=e INVEX=I :are supported by this server
-		//Mozilla
-		//005 QTest AWAYLEN=200 CASEMAPPING=rfc1459 CHANMODES=Zbeg,k,FLfjl,ABCDKMNOQRSTcimnprstuz CHANNELLEN=64 CHANTYPES=# CHARSET=ascii ELIST=MU ESILENCE EXCEPTS=e EXTBAN=,ABCNOQRSTUcmprz FNC KICKLEN=255 MAP :are supported by this server
-		//005 QTest MAXBANS=60 MAXCHANNELS=100 MAXPARA=32 MAXTARGETS=20 MODES=20 NAMESX NETWORK=Mozilla NICKLEN=31 OPERLOG OVERRIDE PREFIX=(Yqaohv)!~&@%+ SECURELIST SILENCE=32 :are supported by this server
-		//005 QTest SSL=[::]:6697 STARTTLS STATUSMSG=!~&@%+ TOPICLEN=307 UHNAMES USERIP VBANLIST WALLCHOPS WALLVOICES WATCH=32 :are supported by this server
 	}
-
+	
 	/**
 	 * Get all supported server options as a map. Be careful about calling this
-	 * very early in the connection phase as we might not of received all the
-	 * 005 lines yet
-	 *
+	 * very early in the connection phase as we might not of received all the 005
+	 * lines yet
 	 * @return An <i>immutable copy</i> of the current supported options
 	 */
 	public ImmutableMap<String, String> getIsupportRaw() {

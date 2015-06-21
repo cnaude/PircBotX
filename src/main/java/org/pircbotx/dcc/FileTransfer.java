@@ -1,19 +1,20 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.dcc;
 
@@ -22,17 +23,19 @@ import java.io.IOException;
 import java.net.Socket;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.pircbotx.Configuration;
+import org.pircbotx.PircBotX;
 import org.pircbotx.User;
 
 /**
  * A general active DCC file transfer
- *
- * @author Leon Blakey
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
+@RequiredArgsConstructor
 public abstract class FileTransfer {
 	@NonNull
-	protected final Configuration configuration;
+	protected final Configuration<PircBotX> configuration;
 	@NonNull
 	protected final Socket socket;
 	@NonNull
@@ -44,28 +47,13 @@ public abstract class FileTransfer {
 	@Getter
 	protected final long startPosition;
 	@Getter
-	protected final long fileSize;
-	@Getter
 	protected long bytesTransfered;
 	@Getter
 	protected DccState state = DccState.INIT;
 	protected final Object stateLock = new Object();
 
-	public FileTransfer(Configuration configuration, Socket socket, User user, File file, long startPosition, long fileSize) {
-		this.configuration = configuration;
-		this.socket = socket;
-		this.user = user;
-		this.file = file;
-		this.startPosition = startPosition;
-		this.fileSize = fileSize;
-
-		//Clients use bytesTransferred to see where we are in the file
-		this.bytesTransfered = startPosition;
-	}
-
 	/**
 	 * Transfer the file to the user
-	 *
 	 * @throws IOException If an error occurred during transfer
 	 */
 	public void transfer() throws IOException {
@@ -83,25 +71,22 @@ public abstract class FileTransfer {
 	}
 
 	protected abstract void transferFile() throws IOException;
-
+	
 	/**
 	 * Callback at end of read/write loop:
 	 * <p>
-	 * Receive: Socket read -> file write -> socket write (bytes transferred) ->
-	 * callback -> repeat
+	 * Receive: Socket read -> file write -> socket write (bytes transferred) -> callback -> repeat
 	 * <p>
-	 * Send: File read -> socket write -> socket read (bytes transferred) ->
-	 * callback -> repeat
+	 * Send: File read -> socket write -> socket read (bytes transferred) -> callback -> repeat
 	 */
-	protected void onAfterSend() {
+	protected void onAfterSend() {	
 	}
-
+	
 	/**
 	 * Is the transfer finished?
-	 *
 	 * @return True if its finished
 	 */
 	public boolean isFinished() {
-		return state == DccState.DONE;
+		return state == DccState.DONE; 
 	}
 }

@@ -1,19 +1,20 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.hooks.events;
 
@@ -26,87 +27,51 @@ import lombok.Getter;
 import lombok.NonNull;
 import org.pircbotx.hooks.Event;
 import org.pircbotx.PircBotX;
-import org.pircbotx.UserHostmask;
 import org.pircbotx.hooks.types.GenericChannelUserEvent;
 import org.pircbotx.hooks.types.GenericMessageEvent;
 
 /**
  * Used whenever a message is sent to a channel.
  *
- * @author Leon Blakey
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class MessageEvent extends Event implements GenericMessageEvent, GenericChannelUserEvent {
-	/**
-	 * The channel to which the message was sent.
-	 */
-	@Getter(onMethod = @_(
-			@Override))
-	protected final Channel channel;
-	/**
-	 * The raw channel name, could be a special mode message eg +#channel that
-	 * only goes to voiced users.
-	 */
-	protected final String channelSource;
-	/**
-	 * The user hostmask who sent the message.
-	 */
-	@Getter(onMethod = @_(
-			@Override))
-	protected final UserHostmask userHostmask;
-	/**
-	 * The user who sent the message.
-	 */
-	@Getter(onMethod = @_(
-			@Override,
-			@Nullable))
-	protected final User user;
-	/**
-	 * The actual message sent to the channel.
-	 */
-	@Getter(onMethod = @_(
-			@Override))
-	protected final String message;
+public class MessageEvent<T extends PircBotX> extends Event<T> implements GenericMessageEvent<T>, GenericChannelUserEvent<T> {
 
-	public MessageEvent(PircBotX bot, @NonNull Channel channel, @NonNull String channelSource, @NonNull UserHostmask userHostmask, User user, @NonNull String message) {
-		super(bot);
-		this.channel = channel;
-		this.channelSource = channelSource;
-		this.userHostmask = userHostmask;
-		this.user = user;
-		this.message = message;
-	}
+    @Getter(onMethod = @_(
+            @Override))
+    protected final Channel channel;
+    @Getter(onMethod = @_(
+            @Override))
+    protected final User user;
+    @Getter(onMethod = @_(
+            @Override))
+    protected final String message;
 
-	/**
-	 * Respond with a channel message in <code>user: message</code> format to
-	 * the user that sent the message
-	 *
-	 * @param response The response to send
-	 */
-	@Override
-	public void respond(String response) {
-		getBot().sendIRC().message(channelSource, getUser().getNick() + ": " + response);
-	}
+    /**
+     * Default constructor to setup object. Timestamp is automatically set to
+     * current time as reported by {@link System#currentTimeMillis() }
+     *
+     * @param channel The channel to which the message was sent.
+     * @param user The user who sent the message.
+     * @param message The actual message sent to the channel.
+     */
+    public MessageEvent(T bot, @NonNull Channel channel, @NonNull User user, @NonNull String message) {        
+        super(bot);
+        this.channel = channel;
+        this.user = user;
+        this.message = message;
+    }
 
-	/**
-	 * Respond with a message to the channel without the prefix
-	 *
-	 * @param response The response to send
-	 */
-	public void respondChannel(String response) {
-		if (getChannel() == null)
-			throw new RuntimeException("Event does not contain a channel");
-		getBot().sendIRC().message(channelSource, response);
-	}
-
-	/**
-	 * Respond with a PM directly to the user
-	 *
-	 * @param response The response to send
-	 */
-	@Override
-	public void respondPrivateMessage(String response) {
-		getUser().send().message(response);
-	}
+    /**
+     * Respond with a channel message in <code>user: message</code> format to
+     * the user that sent the message
+     *
+     * @param response The response to send
+     */
+    @Override
+    public void respond(@Nullable String response) {
+        getChannel().send().message(getUser(), response);
+    }
 }

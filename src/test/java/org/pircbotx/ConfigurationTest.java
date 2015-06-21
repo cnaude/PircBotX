@@ -1,24 +1,24 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import java.lang.reflect.Field;
@@ -38,14 +38,14 @@ import static org.testng.Assert.*;
 
 /**
  *
- * @author Leon Blakey
+ * @author Leon
  */
 public class ConfigurationTest {
 	@DataProvider
 	public Object[][] fieldNamesDataProvider() throws NoSuchMethodException {
-		List<Object[]> params = Lists.newArrayList();
+		List<Object[]> params = new ArrayList();
 		for (Field curField : Configuration.class.getDeclaredFields())
-			if (TestUtils.isRealMember(curField)) {
+			if (!curField.isSynthetic()) {
 				String prefix = (curField.getType().equals(boolean.class)) ? "is" : "get";
 				String name = StringUtils.capitalize(curField.getName());
 
@@ -68,7 +68,6 @@ public class ConfigurationTest {
 
 	@Test(dataProvider = "fieldNamesDataProvider", dependsOnMethods = "containSameFieldsTest",
 			description = "Make sure every getter in builder gets called when creating Configuration")
-	@SuppressWarnings("unchecked")
 	public void copyConstructorTest(Class containerClass, Class copiedClass, Object copiedOpject, String getterName) throws Exception {
 		//Get the method that is going to be called
 		final Method methodToCall = copiedClass.getDeclaredMethod(getterName);
@@ -78,12 +77,13 @@ public class ConfigurationTest {
 		Object copiedObjectSpied = mock(copiedClass, withSettings()
 				.spiedInstance(copiedOpject)
 				.defaultAnswer(new Answer() {
-					public Object answer(InvocationOnMock invocation) throws Throwable {
-						if (invocation.getMethod().equals(methodToCall))
-							isMethodCalled.setValue(true);
-						return invocation.callRealMethod();
-					}
-				}));
+                        @Override
+			public Object answer(InvocationOnMock invocation) throws Throwable {
+				if (invocation.getMethod().equals(methodToCall))
+					isMethodCalled.setValue(true);
+				return invocation.callRealMethod();
+			}
+		}));
 
 		//Call and test
 		containerClass.getDeclaredConstructor(copiedClass).newInstance(copiedObjectSpied);
@@ -94,6 +94,7 @@ public class ConfigurationTest {
 	@Test
 	public void containSameFieldsTest() {
 		Function<Field, String> function = new Function<Field, String>() {
+                        @Override
 			public String apply(Field string) {
 				return string.getName();
 			}

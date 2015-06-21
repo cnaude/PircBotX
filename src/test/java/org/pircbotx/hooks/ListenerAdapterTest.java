@@ -1,31 +1,28 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.hooks;
 
-import com.google.common.collect.Sets;
 import java.lang.reflect.Method;
-import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
@@ -36,18 +33,15 @@ import static org.testng.Assert.*;
 import static org.mockito.Mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.pircbotx.Configuration;
 import org.pircbotx.PircBotX;
 import org.pircbotx.TestUtils;
-import org.pircbotx.hooks.events.WhoisEvent;
-import org.pircbotx.hooks.managers.GenericListenerManager;
 import org.pircbotx.hooks.types.GenericEvent;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 
 /**
  *
- * @author Leon Blakey
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
 public class ListenerAdapterTest {
 	protected PircBotX bot;
@@ -60,7 +54,6 @@ public class ListenerAdapterTest {
 
 	/**
 	 * Makes sure adapter uses all events
-	 *
 	 * @throws Exception
 	 */
 	@Test(dataProviderClass = TestUtils.class, dataProvider = "eventAllDataProvider", description = "Verify ListenerAdapter has methods for all events")
@@ -118,7 +111,6 @@ public class ListenerAdapterTest {
 	}
 
 	@DataProvider
-	@SuppressWarnings("unchecked")
 	public static Object[][] onEventTestDataProvider() {
 		//Map events to methods
 		Map<Class<? extends Event>, Set<Method>> eventToMethod = new HashMap();
@@ -131,7 +123,7 @@ public class ListenerAdapterTest {
 			if (curClass.isAssignableFrom(Event.class) || curClass.isInterface()
 					|| (eventToMethod.containsKey(curClass) && eventToMethod.get(curClass).contains(curMethod)))
 				continue;
-			Set<Method> methods = Sets.newHashSet();
+			Set methods = new HashSet();
 			methods.add(curMethod);
 			eventToMethod.put((Class<? extends Event>) curClass, methods);
 		}
@@ -162,8 +154,9 @@ public class ListenerAdapterTest {
 			description = "Tests onEvent's completness")
 	public void onEventTest(Class<? extends Event> eventClass, Set<Method> methodsToCall) throws Exception {
 		//Init, using mocks to store method calls
-		final Set<Method> calledMethods = Sets.newHashSet();
+		final Set<Method> calledMethods = new HashSet();
 		ListenerAdapter mockListener = mock(ListenerAdapter.class, new Answer() {
+                        @Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				calledMethods.add(invocation.getMethod());
 				return null;

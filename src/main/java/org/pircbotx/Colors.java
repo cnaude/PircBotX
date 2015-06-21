@@ -1,34 +1,34 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx;
 
-import com.google.common.collect.ImmutableMap;
-
 /**
- * The Colors class provides several static fields and methods that you may find
- * useful when writing an IRC Bot.
+ * The Colors class provides several static fields and methods that you may
+ * find useful when writing an IRC Bot.
  * <p>
- * This class contains constants that are useful for formatting lines sent to
- * IRC servers. These constants allow you to apply various formatting to the
- * lines, such as colours, boldness, underlining and reverse text.
+ * This class contains constants that are useful for formatting lines
+ * sent to IRC servers. These constants allow you to apply various
+ * formatting to the lines, such as colours, boldness, underlining
+ * and reverse text.
  * <p>
- * The class contains static methods to remove colours and formatting from lines
- * of IRC text.
+ * The class contains static methods to remove colours and formatting
+ * from lines of IRC text.
  * <p>
  * Here are some examples of how to use the constants
  * <pre>
@@ -39,21 +39,19 @@ import com.google.common.collect.ImmutableMap;
  * message(Colors.BOLD + Colors.RED + "Bold and red");
  * <b><font color="red">Bold and red</font></b></pre>
  * <p/>
- * Please note that some IRC channels may be configured to reject any messages
- * that use colours. Also note that older IRC clients may be unable to correctly
- * display lines that contain colours and other control characters.
+ * Please note that some IRC channels may be configured to reject any
+ * messages that use colours. Also note that older IRC clients may be
+ * unable to correctly display lines that contain colours and other
+ * control characters.
  * <p>
- * Note that this class name has been spelt in the American style in order to
- * remain consistent with the rest of the Java API.
+ * Note that this class name has been spelt in the American style in
+ * order to remain consistent with the rest of the Java API.
  *
  *
  * @since PircBot 0.9.12
  * @author Origionally by:
- * <a href="http://www.jibble.org/">Paul James Mutton</a> for <a
- * href="http://www.jibble.org/pircbot.php">PircBot</a>
- * <p>
- * Forked and Maintained by Leon Blakey in <a
- * href="http://pircbotx.googlecode.com">PircBotX</a>
+ * <a href="http://www.jibble.org/">Paul James Mutton</a> for <a href="http://www.jibble.org/pircbot.php">PircBot</a>
+ * <p>Forked and Maintained by Leon Blakey <lord.quackstar at gmail.com> in <a href="http://pircbotx.googlecode.com">PircBotX</a>
  */
 public final class Colors {
 	/**
@@ -136,52 +134,11 @@ public final class Colors {
 	 * Light gray coloured text.
 	 */
 	public static final String LIGHT_GRAY = "\u000315";
-	/**
-	 * Italicized text.
-	 */
-	public static final String ITALICS = "\u001d";
-	/**
-	 * Pre-built lookup table by String for all the fields in this class.
-	 */
-	public static final ImmutableMap<String, String> LOOKUP_TABLE = ImmutableMap.<String, String>builder()
-			.put("NORMAL", NORMAL)
-			.put("BOLD", BOLD)
-			.put("UNDERLINE", UNDERLINE)
-			.put("REVERSE", REVERSE)
-			.put("WHITE", WHITE)
-			.put("BLACK", BLACK)
-			.put("DARK_BLUE", DARK_BLUE)
-			.put("DARK_GREEN", DARK_GREEN)
-			.put("RED", RED)
-			.put("BROWN", BROWN)
-			.put("PURPLE", PURPLE)
-			.put("OLIVE", OLIVE)
-			.put("YELLOW", YELLOW)
-			.put("GREEN", GREEN)
-			.put("TEAL", TEAL)
-			.put("CYAN", CYAN)
-			.put("BLUE", BLUE)
-			.put("MAGENTA", MAGENTA)
-			.put("DARK_GRAY", DARK_GRAY)
-			.put("LIGHT_GRAY", LIGHT_GRAY)
-			.put("ITALICS", ITALICS)
-			.build();
 
 	/**
 	 * This class should not be constructed.
 	 */
 	private Colors() {
-	}
-
-	/**
-	 * Lookup color as a String
-	 *
-	 * @param colorName Name of field in this class, will be converted to
-	 * uppercase
-	 * @return Color value or null
-	 */
-	public static String lookup(String colorName) {
-		return LOOKUP_TABLE.get(colorName.toUpperCase());
 	}
 
 	/**

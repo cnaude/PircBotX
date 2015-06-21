@@ -1,104 +1,97 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.hooks.events;
 
 import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.Builder;
 import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.Event;
 
 /**
  * Dispatched when we receive a completed Whois request. Note this is completely
- * independent of User and Channel objects since a user might not be connected
- * to us directly
- *
- * @author Leon Blakey
+ * independent of User and Channel objects since a user might not be connected to
+ * us directly
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
-@Builder(builderClassName = "Builder", buildMethodName = "generateEvent")
+//TODO: Add tests
 @EqualsAndHashCode(callSuper = true)
 @Getter
-public class WhoisEvent extends Event {
-	@NonNull
+public class WhoisEvent<B extends PircBotX> extends Event<B> {
 	protected final String nick;
-	@NonNull
 	protected final String login;
-	@NonNull
 	protected final String hostname;
-	@NonNull
 	protected final String realname;
-	@NonNull
 	protected final ImmutableList<String> channels;
-	@NonNull
 	protected final String server;
-	@NonNull
 	protected final String serverInfo;
 	protected final long idleSeconds;
 	protected final long signOnTime;
-	@NonNull
 	protected final String registeredAs;
-	protected final boolean exists;
-	protected final String awayMessage;
 
-	WhoisEvent(PircBotX bot, @NonNull Builder builder) {
+	public WhoisEvent(@NonNull B bot, @NonNull Builder<B> builder) {
 		super(bot);
-		this.nick = builder.nick;
-		this.login = builder.login;
-		this.hostname = builder.hostname;
-		this.realname = builder.realname;
-		this.channels = builder.channels;
-		this.server = builder.server;
-		this.serverInfo = builder.serverInfo;
-		this.idleSeconds = builder.idleSeconds;
-		this.signOnTime = builder.signOnTime;
-		this.registeredAs = builder.registeredAs;
-		this.exists = builder.exists;
-		this.awayMessage = builder.awayMessage;
-	}
-
-	public static Builder builder() {
-		return new Builder().channels(ImmutableList.<String>of());
-	}
-
-	/**
-	 * Check if user is registered
-	 *
-	 * @return True if user is registered
-	 * @see #getRegisteredAs()
-	 */
-	public boolean isRegistered() {
-		return registeredAs != null;
+		this.nick = builder.getNick();
+		this.login = builder.getLogin();
+		this.hostname = builder.getHostname();
+		this.realname = builder.getRealname();
+		this.channels = builder.getChannels();
+		this.server = builder.getServer();
+		this.serverInfo = builder.getServerInfo();
+		this.idleSeconds = builder.getIdleSeconds();
+		this.signOnTime = builder.getSignOnTime();
+		this.registeredAs = builder.getRegisteredAs();
 	}
 
 	@Override
-	public void respond(String response) {
+	public void respond(@Nullable String response) {
 		getBot().sendIRC().message(getNick(), response);
 	}
 
-	/**
-	 * Internal class to allow data to be collected over multiple lines
-	 */
-	public static class Builder {
-		public WhoisEvent generateEvent(PircBotX bot) {
-			return new WhoisEvent(bot, this);
+	@Data
+	@NoArgsConstructor
+	public static class Builder<B extends PircBotX> {
+		@NonNull
+		protected String nick;
+		@NonNull
+		protected String login;
+		@NonNull
+		protected String hostname;
+		@NonNull
+		protected String realname;
+		@NonNull
+		protected ImmutableList<String> channels;
+		@NonNull
+		protected String server;
+		@NonNull
+		protected String serverInfo;
+		protected long idleSeconds;
+		protected long signOnTime;
+		@NonNull
+		protected String registeredAs;
+
+		public WhoisEvent<B> generateEvent(@NonNull B bot) {
+			return new WhoisEvent<>(bot, this);
 		}
 	}
 }

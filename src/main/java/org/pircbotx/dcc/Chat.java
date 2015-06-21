@@ -1,19 +1,20 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.dcc;
 
@@ -26,21 +27,17 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.pircbotx.User;
 import org.pircbotx.exception.DccException;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 
 /**
  * Generic DCC chat handling class that represents an active dcc chat.
- * <p>
- * @author Leon Blakey
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
-@Slf4j
+//@Slf4j
 public class Chat {
-	public static final Marker INPUT_CHAT_MARKER = MarkerFactory.getMarker("pircbotx.dccChat.input");
-	public static final Marker OUTPUT_CHAT_MARKER = MarkerFactory.getMarker("pircbotx.dccChat.output");
+	//protected static final Marker INPUT_CHAT_MARKER = MarkerFactory.getMarker("pircbotx.dccChat.input");
+	//protected static final Marker OUTPUT_CHAT_MARKER = MarkerFactory.getMarker("pircbotx.dccChat.output");
 	@Getter
 	protected User user;
 	@Getter
@@ -63,9 +60,9 @@ public class Chat {
 	}
 
 	/**
-	 * Reads the next line of text from the client at the other end of our DCC
-	 * Chat connection. This method blocks until something can be returned. If
-	 * the connection has closed, null is returned.
+	 * Reads the next line of text from the client at the other end of our DCC Chat
+	 * connection. This method blocks until something can be returned.
+	 * If the connection has closed, null is returned.
 	 *
 	 * @return The next line of text from the client. Returns null if the
 	 * connection has closed normally.
@@ -76,7 +73,7 @@ public class Chat {
 		if (finished)
 			throw new DccException(DccException.Reason.ChatNotConnected, user, "Chat has already finished");
 		String line = bufferedReader.readLine();
-		log.info(INPUT_CHAT_MARKER, "<<<" + line);
+		//log.debug(INPUT_CHAT_MARKER, "<<<" + line);
 		return line;
 	}
 
@@ -84,8 +81,8 @@ public class Chat {
 	 * Sends a line of text to the client at the other end of our DCC Chat
 	 * connection.
 	 *
-	 * @param line The line of text to be sent. This should not include linefeed
-	 * characters.
+	 * @param line The line of text to be sent. This should not include
+	 * linefeed characters.
 	 *
 	 * @throws IOException If an I/O error occurs.
 	 */
@@ -94,7 +91,7 @@ public class Chat {
 		if (finished)
 			throw new DccException(DccException.Reason.ChatNotConnected, user, "Chat has already finished");
 		synchronized (bufferedWriter) {
-			log.info(OUTPUT_CHAT_MARKER, ">>>" + line);
+			//log.debug(OUTPUT_CHAT_MARKER, ">>>" + line);
 			bufferedWriter.write(line + "\r\n");
 			bufferedWriter.flush();
 		}

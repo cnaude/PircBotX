@@ -1,19 +1,20 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.impl;
 
@@ -28,27 +29,21 @@ import org.pircbotx.hooks.events.IncomingChatRequestEvent;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.managers.ListenerManager;
 import org.pircbotx.hooks.types.GenericMessageEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Basic example class for various features of PircBotX. Heavily documented to
- * explain what's going on
+ * Basic example class for various features of PircBotX. Heavily documented
+ * to explain what's going on
  * <p/>
  * @author Leon Blakey <lord.quackstar at gmail.com>
  */
 public class PircBotXExample extends ListenerAdapter {
-	public static Logger log = LoggerFactory.getLogger(PircBotXExample.class);
-
 	/**
-	 * This example shows how to handle messages, actions, and notices from both
-	 * channels and private messages. It also shows how to use WaitForQueue to
-	 * have multi-line commands.
-	 *
+	 * This example shows how to handle messages, actions, and notices from both 
+	 * channels and private messages. It also shows how to use WaitForQueue to 
+	 * have multi-line commands. 
 	 * @param event A GenericMessageEvent from a channel or private message
-	 * @throws Exception If any Exceptions might be thrown, throw them up and
-	 * let the {@link ListenerManager} handle it. This can be removed though if
-	 * not needed
+	 * @throws Exception If any Exceptions might be thrown, throw them up and let
+	 * the {@link ListenerManager} handle it. This can be removed though if not needed
 	 */
 	@Override
 	public void onGenericMessage(final GenericMessageEvent event) throws Exception {
@@ -86,12 +81,10 @@ public class PircBotXExample extends ListenerAdapter {
 	}
 
 	/**
-	 * This basic example shows how to handle incoming DCC chat requests. It
-	 * basically repeats what the user said and says how many characters are in
-	 * their message
-	 *
+	 * This basic example shows how to handle incoming DCC chat requests. It basically
+	 * repeats what the user said and says how many characters are in their message
 	 * @param event A incoming DCC chat request event
-	 * @throws Exception
+	 * @throws Exception 
 	 */
 	@Override
 	public void onIncomingChatRequest(IncomingChatRequestEvent event) throws Exception {
@@ -120,7 +113,7 @@ public class PircBotXExample extends ListenerAdapter {
 				.setCapEnabled(true) //Enable CAP features
 				.addCapHandler(new TLSCapHandler(new UtilSSLSocketFactory().trustAllCertificates(), true))
 				.addListener(new PircBotXExample()) //This class is a listener, so add it to the bots known listeners
-				.addServer("irc.freenode.net")
+				.setServerHostname("irc.freenode.net")
 				.addAutoJoinChannel("#pircbotx") //Join the official #pircbotx channel
 				.buildConfiguration();
 
@@ -132,7 +125,7 @@ public class PircBotXExample extends ListenerAdapter {
 		} //In your code you should catch and handle each exception seperately,
 		//but here we just lump them all togeather for simpliciy
 		catch (Exception ex) {
-			log.error("Failed to start bot", ex);
+			ex.printStackTrace();
 		}
 	}
 }

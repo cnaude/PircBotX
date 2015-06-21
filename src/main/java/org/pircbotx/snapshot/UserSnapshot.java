@@ -1,19 +1,20 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.snapshot;
 
@@ -24,13 +25,11 @@ import lombok.ToString;
 import org.pircbotx.Channel;
 import org.pircbotx.User;
 import org.pircbotx.UserChannelDao;
-import org.pircbotx.UserHostmask;
 
 /**
  * A snapshot of a user in time. Useful to get information before a user leaves
  * a channel or server. Any attempts to modify data throw an exception
- *
- * @author Leon Blakey
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
 //Only use super implementation which uses UIDs
 @EqualsAndHashCode(callSuper = true, of = {})
@@ -40,21 +39,22 @@ public class UserSnapshot extends User {
 	protected final User generatedFrom;
 	@Setter
 	protected UserChannelDaoSnapshot dao;
-
+	
 	public UserSnapshot(User user) {
-		super(user, true);
+		super(user.getBot(), null, user.getNick());
 		generatedFrom = user;
 
 		//Clone fields
 		super.setAwayMessage(user.getAwayMessage());
 		super.setHops(user.getHops());
+		super.setHostmask(user.getHostmask());
 		super.setIrcop(user.isIrcop());
+		super.setLogin(user.getLogin());
 		super.setRealName(user.getRealName());
 		super.setServer(user.getServer());
 	}
-
+	
 	@Override
-	@SuppressWarnings("unchecked")
 	protected UserChannelDao<User, Channel> getDao() {
 		//Workaround for generics
 		return (UserChannelDao<User, Channel>) (Object) dao;
@@ -66,37 +66,42 @@ public class UserSnapshot extends User {
 	}
 
 	@Override
-	protected void updateHostmask(UserHostmask userHostmask) {
-		super.updateHostmask(userHostmask); //To change body of generated methods, choose Tools | Templates.
-	}
-	
-	@Override
 	protected void setAwayMessage(String away) {
-		SnapshotUtils.fail();
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
 	}
 
 	@Override
 	protected void setHops(int hops) {
-		SnapshotUtils.fail();
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
+	}
+
+	@Override
+	protected void setHostmask(String hostmask) {
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
 	}
 
 	@Override
 	protected void setIrcop(boolean ircop) {
-		SnapshotUtils.fail();
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
+	}
+
+	@Override
+	protected void setLogin(String login) {
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
 	}
 
 	@Override
 	protected void setNick(String nick) {
-		SnapshotUtils.fail();
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
 	}
 
 	@Override
 	protected void setRealName(String realName) {
-		SnapshotUtils.fail();
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
 	}
 
 	@Override
 	protected void setServer(String server) {
-		SnapshotUtils.fail();
+		throw new UnsupportedOperationException("Attempting to set field on user snapshot");
 	}
 }

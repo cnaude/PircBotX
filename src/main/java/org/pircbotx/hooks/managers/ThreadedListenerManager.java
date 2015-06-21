@@ -1,29 +1,28 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.hooks.managers;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -31,9 +30,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.Synchronized;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.pircbotx.PircBotX;
 import org.pircbotx.Utils;
@@ -41,20 +40,22 @@ import org.pircbotx.hooks.Event;
 import org.pircbotx.hooks.Listener;
 
 /**
- * ListenerManager that runs individual listeners in their own thread per event.
- *
- * @author Leon Blakey
+ * A listener manager that executes individual listeners in a thread pool. Will 
+ * also shutdown all running listeners upon bot shutdown
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
-@Slf4j
-public class ThreadedListenerManager extends ListenerManager {
+//@Slf4j
+public class ThreadedListenerManager<B extends PircBotX> implements ListenerManager<B> {
 	protected static final AtomicInteger MANAGER_COUNT = new AtomicInteger();
 	protected final int managerNumber;
 	protected ExecutorService pool;
-	protected Set<Listener> listeners = Collections.synchronizedSet(new HashSet<Listener>());
-	protected final Multimap<PircBotX, ManagedFutureTask> runningListeners = LinkedListMultimap.create();
+	protected Set<Listener<B>> listeners = Collections.synchronizedSet(new HashSet<Listener<B>>());
+	protected AtomicLong currentId = new AtomicLong();
+	protected final Multimap<B, ManagedFutureTask> runningListeners = LinkedListMultimap.create();
 
 	/**
-	 * Configures with default cached thread thread pool.
+	 * Configures with default options: perHook is false and a
+	 * {@link Executors#newCachedThreadPool() cached threadpool} is used
 	 */
 	public ThreadedListenerManager() {
 		managerNumber = MANAGER_COUNT.getAndIncrement();
@@ -68,9 +69,9 @@ public class ThreadedListenerManager extends ListenerManager {
 	}
 
 	/**
-	 * Configures with specified thread pool
-	 *
-	 * @param pool Thread pool to run listeners in
+	 * Configures with default perHook mode (false) and specified
+	 * {@link ExecutorService}
+	 * @param pool
 	 */
 	public ThreadedListenerManager(ExecutorService pool) {
 		managerNumber = MANAGER_COUNT.getAndIncrement();
@@ -78,8 +79,8 @@ public class ThreadedListenerManager extends ListenerManager {
 	}
 
 	@Override
-	public void addListener(Listener listener) {
-		getListenersReal().add(listener);
+	public boolean addListener(Listener listener) {
+		return getListenersReal().add(listener);
 	}
 
 	@Override
@@ -88,11 +89,11 @@ public class ThreadedListenerManager extends ListenerManager {
 	}
 
 	@Override
-	public ImmutableSet<Listener> getListeners() {
+	public ImmutableSet<Listener<B>> getListeners() {
 		return ImmutableSet.copyOf(getListenersReal());
 	}
 
-	protected Set<Listener> getListenersReal() {
+	protected Set<Listener<B>> getListenersReal() {
 		return listeners;
 	}
 
@@ -103,31 +104,45 @@ public class ThreadedListenerManager extends ListenerManager {
 
 	@Override
 	@Synchronized("listeners")
-	public void dispatchEvent(Event event) {
+	public void dispatchEvent(Event<B> event) {
 		//For each Listener, add a new Runnable
-		for (Listener curListener : getListenersReal())
+		for (Listener<B> curListener : getListenersReal())
 			submitEvent(pool, curListener, event);
 	}
 
-	protected void submitEvent(ExecutorService pool, final Listener listener, final Event event) {
+	protected void submitEvent(ExecutorService pool, final Listener<B> listener, final Event<B> event) {
 		pool.execute(new ManagedFutureTask(listener, event, new Callable<Void>() {
+                        @Override
 			public Void call() {
 				try {
-					if (event.getBot() != null)
-						Utils.addBotToMDC(event.getBot());
+					Utils.addBotToMDC(event.getBot());
 					listener.onEvent(event);
-				} catch (Throwable e) {
-					getExceptionHandler().onException(listener, event, e);
+				} catch (Exception e) {
+					//log.error("Exception encountered when executing event " + event + " on listener " + listener, e);
 				}
 				return null;
 			}
 		}));
 	}
 
+	@Override
+	public void setCurrentId(long currentId) {
+		this.currentId.set(currentId);
+	}
+
+	@Override
+	public long getCurrentId() {
+		return currentId.get();
+	}
+
+	@Override
+	public long incrementCurrentId() {
+		return currentId.getAndIncrement();
+	}
+
 	/**
-	 * Shuts down the internal thread pool. If you need to do more a advanced
-	 * shutdown, the pool is returned.
-	 *
+	 * Shutdown the internal Threadpool. If you need to do more a advanced shutdown,
+	 * the pool is returned.
 	 * @return The internal thread pool the ThreadedListenerManager uses
 	 */
 	public ExecutorService shutdown() {
@@ -135,29 +150,25 @@ public class ThreadedListenerManager extends ListenerManager {
 		return pool;
 	}
 
-	public void shutdown(PircBotX bot) {
-		//Make local copy to avoid deadlocking ManagedFutureTask when it removes itself
-		List<ManagedFutureTask> remainingTasks;
+        @Override
+	public void shutdown(B bot) {
 		synchronized (runningListeners) {
-			remainingTasks = Lists.newArrayList(runningListeners.get(bot));
+			for (ManagedFutureTask curFuture : runningListeners.get(bot))
+				try {
+					//log.debug("Waiting for listener " + curFuture.getListener() + " to execute event " + curFuture.getEvent());
+					curFuture.get();
+				} catch (Exception e) {
+					throw new RuntimeException("Cannot shutdown listener " + curFuture.getListener() + " executing event " + curFuture.getEvent(), e);
+				}
 		}
-
-		//Wait for all remaining tasks to return
-		for (ManagedFutureTask curFuture : remainingTasks)
-			try {
-				log.debug("Waiting for listener " + curFuture.getListener() + " to execute event " + curFuture.getEvent());
-				curFuture.get();
-			} catch (Exception e) {
-				throw new RuntimeException("Cannot shutdown listener " + curFuture.getListener() + " executing event " + curFuture.getEvent(), e);
-			}
 	}
 
 	@Getter
 	public class ManagedFutureTask extends FutureTask<Void> {
-		protected final Listener listener;
-		protected final Event event;
+		protected final Listener<B> listener;
+		protected final Event<B> event;
 
-		public ManagedFutureTask(Listener listener, Event event, Callable<Void> callable) {
+		public ManagedFutureTask(Listener<B> listener, Event<B> event, Callable<Void> callable) {
 			super(callable);
 			this.listener = listener;
 			this.event = event;

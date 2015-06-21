@@ -1,111 +1,116 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx.hooks.managers;
 
 import com.google.common.collect.ImmutableSet;
-import java.util.concurrent.atomic.AtomicLong;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
 import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.Event;
 import org.pircbotx.hooks.Listener;
 
 /**
- * Manages {@link Listener}'s and handles dispatching events
- *
- * @author Leon Blakey
+ * Manages everything about Listeners: adding, removing, and dispatching events
+ * to appropriate listeners.
+ * <p>
+ * An important job of all methods in this class is to absorb and report <u>any</u>
+ * exceptions or errors before they reach {@link PircBotX}. Failure to do so
+ * could break many internal long running operations. It is therefor recommended
+ * to catch {@link Throwable} and report with {@link PircBotX#logException(java.lang.Throwable) }
+ * <p>
+ * Performance is another important job in implementations. Events can be dispatched
+ * very quickly at times (eg a /WHO on all joined channels) so lots of expensive
+ * calls can hurt performance of the entire bot. Therefor important methods like
+ * {@link #dispatchEvent(org.pircbotx.hooks.Event) } should be as fast as possible
+ * <p/>
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
-public abstract class ListenerManager {
-	protected AtomicLong currentId = new AtomicLong();
-	/**
-	 * Handler of any exception thrown by a listener while executing an event
-	 */
-	@NonNull
-	@Getter
-	@Setter
-	protected ManagerExceptionHandler exceptionHandler = new LogManagerExceptionHandler();
-
+public interface ListenerManager<B extends PircBotX> {
 	/**
 	 * Sends event to all appropriate listeners.
-	 *
+	 * <p>
+	 * <b>For implementations:</b> Please read {@link ListenerManager important information}
+	 * on exception handling and performance.
 	 * @param event The event to send
 	 */
-	public abstract void dispatchEvent(Event event);
+	public void dispatchEvent(Event<B> event);
 
 	/**
-	 * Add a listener to this ListenerManager
-	 *
+	 * Adds an listener to the list of listeners for an event.
+	 * <p>
+	 * <b>For implementations:</b> Please read {@link ListenerManager important information}
+	 * on exception handling and performance.
 	 * @param listener The listener to add
+	 * @return True if the listener was successfully added, false if not
 	 */
-	public abstract void addListener(Listener listener);
+	public boolean addListener(Listener listener);
 
 	/**
-	 * Remove a listener from this ListenerManager
-	 *
-	 * @param listener The listener to remove
-	 * @return True if the listener was removed, false if it didn't exist
+	 * Removes the specified Listener
+	 * <p>
+	 * <b>For implementations:</b> Please read {@link ListenerManager important information}
+	 * on exception handling and performance.
+	 * @param listener A Listener to remove
+	 * @return True if the listener was removed, false if it didn't exist or wasn't
+	 * removed
 	 */
-	public abstract boolean removeListener(Listener listener);
+	public boolean removeListener(Listener listener);
 
 	/**
-	 * Check if a listener is in this ListenerManager
-	 *
+	 * Checks if the specified listener exists
 	 * @param listener The listener <i>instance</i> to look for
 	 * @return True if it the listener exists, false if it doesn't
 	 */
-	public abstract boolean listenerExists(Listener listener);
+	public boolean listenerExists(Listener listener);
 
 	/**
 	 * Gets all listeners that are in this ListenerManager
-	 *
-	 * @return An <b>immutable</b> set of all listeners that are in this
-	 * ListenerManager
+	 * <p>
+	 * <b>For implementations:</b> Please read {@link ListenerManager important information}
+	 * on exception handling and performance.
+	 * @return An <b>immutable copy</b> of all listeners that are in this ListenerManager
 	 */
-	public abstract ImmutableSet<Listener> getListeners();
+	public ImmutableSet<Listener<B>> getListeners();
 
 	/**
-	 * Reset the current id to the specified value for the next event
-	 *
+	 * Set the current id used by the ListenerManager
+	 * <p>
+	 * If you set the current id to 0, this means that the next dispatched event
+	 * is going to have an id of 0
 	 * @param currentId The id to set this ListenerManager to
 	 */
-	public void setCurrentId(long currentId) {
-		this.currentId.set(currentId);
-	}
+	public void setCurrentId(long currentId);
 
 	/**
-	 * Get the current id for the next event
-	 *
+	 * Gets the current id used by the ListenerManager
+	 * <p>
+	 * The current id is the id that's going to be handed out to an event. This
+	 * means that this id has not been dispatched yet.
 	 * @return The current id
 	 */
-	public long getCurrentId() {
-		return currentId.get();
-	}
+	public long getCurrentId();
 
 	/**
-	 * Get the current id for the next event and increment the id for the next
-	 * call
-	 *
+	 * Returns the current ID then increments by 1. This means that if the current
+	 * id is 0 and this method is called, this method returns 0 and {@link #getCurrentId()}
+	 * returns 1.
 	 * @return The current id
 	 */
-	public long incrementCurrentId() {
-		return currentId.getAndIncrement();
-	}
+	public long incrementCurrentId();
 
-	public abstract void shutdown(PircBotX bot);
+	public void shutdown(B bot);
 }

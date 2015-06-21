@@ -1,19 +1,20 @@
 /**
- * Copyright (C) 2010-2014 Leon Blakey <lord.quackstar at gmail.com>
+ * Copyright (C) 2010-2013 Leon Blakey <lord.quackstar at gmail.com>
  *
  * This file is part of PircBotX.
  *
- * PircBotX is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation, either version 3 of the License, or (at your option) any later
- * version.
+ * PircBotX is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * PircBotX is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * PircBotX is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * PircBotX. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with PircBotX. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.pircbotx;
 
@@ -28,8 +29,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.AtomicSafeInitializer;
 import org.apache.commons.lang3.concurrent.ConcurrentException;
 import org.pircbotx.hooks.managers.ThreadedListenerManager;
@@ -37,13 +36,12 @@ import org.pircbotx.output.OutputChannel;
 import org.pircbotx.snapshot.ChannelSnapshot;
 
 /**
- * Represents a Channel that we're joined to.
- *
- * @author Leon Blakey
+ * Represents a Channel that we're joined to. 
+ * @author Leon Blakey <lord.quackstar at gmail.com>
  */
 @ToString(doNotUseGetters = true)
 @EqualsAndHashCode(of = {"name", "bot"})
-@Slf4j
+//@Slf4j
 @Getter
 @Setter(AccessLevel.PROTECTED)
 public class Channel implements Comparable<Channel> {
@@ -54,7 +52,9 @@ public class Channel implements Comparable<Channel> {
 	/**
 	 * Unique UUID for this channel <i>instance</i>
 	 */
-	protected final UUID channelId;
+	protected final UUID channelId = UUID.randomUUID();
+	@Getter(AccessLevel.PROTECTED)
+	protected final UserChannelDao<User, Channel> dao;
 	/**
 	 * The bot that this channel came from
 	 */
@@ -84,7 +84,7 @@ public class Channel implements Comparable<Channel> {
 	/**
 	 * The user who set the topic. Default is blank
 	 */
-	protected UserHostmask topicSetter;
+	protected String topicSetter = "";
 	/**
 	 * Moderated (+m) status
 	 */
@@ -117,33 +117,20 @@ public class Channel implements Comparable<Channel> {
 	protected String channelKey = null;
 	@Getter(AccessLevel.NONE)
 	@Setter(AccessLevel.NONE)
-	protected CountDownLatch modeChangeLatch = null;
+	protected boolean modeStale = false;
 	@Getter(AccessLevel.NONE)
-	protected final Object modeChangeLock = new Object();
+	@Setter(AccessLevel.NONE)
+	protected CountDownLatch modeLatch = null;
 
-	protected Channel(PircBotX bot, String name) {
+	@SuppressWarnings("unchecked")
+	protected Channel(PircBotX bot, UserChannelDao<? extends User, ? extends Channel> dao, String name) {
 		this.bot = bot;
+		this.dao = (UserChannelDao<User, Channel>) dao;
 		this.name = name;
-		this.channelId = UUID.randomUUID();
-	}
-	
-	/**
-	 * Used by ChannelSnapshot
-	 * @param channel 
-	 */
-	protected Channel(Channel channel) {
-		this.bot = channel.bot;
-		this.name = channel.name;
-		this.channelId = channel.channelId;
-	}
-	
-	protected UserChannelDao<User, Channel> getDao() {
-		return bot.getUserChannelDao();
 	}
 
 	/**
 	 * Send a line to the channel.
-	 *
 	 * @return A {@link OutputChannel} for this channel
 	 */
 	public OutputChannel send() {
@@ -155,81 +142,60 @@ public class Channel implements Comparable<Channel> {
 	}
 
 	protected void parseMode(String rawMode) {
-		synchronized (modeChangeLock) {
-			if (rawMode.contains(" ") || (mode != null && mode.contains(" "))) {
-				//Mode contains arguments which are impossible to parse.
-				//Could be a ban command (we shouldn't use this), channel key (should, but where), etc
-				//Need to ask server
-				log.trace("Unknown args in channel {} mode '{}', getting fresh mode", name, rawMode);
-				mode = null;
-				send().getMode();
-			} else {
-				//Parse mode by switching between removing and adding by the existance of a + or - sign
-				boolean adding = true;
-				for (char curChar : rawMode.toCharArray())
-					if (curChar == '-')
-						adding = false;
-					else if (curChar == '+')
-						adding = true;
-					else if (adding)
-						mode = mode + curChar;
-					else
-						mode = mode.replace(Character.toString(curChar), "");
-			}
+		if (rawMode.contains(" ")) {
+			//Mode contains arguments which are impossible to parse.
+			//Could be a ban command (we shouldn't use this), channel key (should, but where), etc
+			//Need to ask server
+			modeStale = true;
+			return;
 		}
+
+		//Parse mode by switching between removing and adding by the existance of a + or - sign
+		boolean adding = true;
+		for (char curChar : rawMode.toCharArray())
+			if (curChar == '-')
+				adding = false;
+			else if (curChar == '+')
+				adding = true;
+			else if (adding)
+				mode = mode + curChar;
+			else
+				mode = mode.replace(Character.toString(curChar), "");
 	}
 
 	/**
-	 * Gets the channel mode. If mode is simple (no arguments), this will return
-	 * immediately. If its not (mode with arguments, eg channel key), then asks
-	 * the server for the correct mode, waiting until it gets a response
+	 * Gets the channel mode. If mode is simple (no arguments), this will return immediately.
+	 * If its not (mode with arguments, eg channel key), then asks the server for the
+	 * correct mode, waiting until it gets a response
 	 * <p>
-	 * <b>WARNING:</b> Because of the last checking, a threaded listener manager
-	 * like {@link ThreadedListenerManager} is required. Using a single threaded
-	 * listener manager like
-	 * {@link org.pircbotx.hooks.managers.GenericListenerManager} will mean this
-	 * method <i>never returns</i>!
-	 *
+	 * <b>WARNING:</b> Because of the last checking, a threaded listener manager like
+	 * {@link ThreadedListenerManager} is required. Using a single threaded listener
+	 * manager like {@link org.pircbotx.hooks.managers.GenericListenerManager} will 
+	 * mean this method <i>never returns</i>!
 	 * @return A known good mode, either immediately or soon.
 	 */
 	public String getMode() {
-		synchronized (modeChangeLock) {
-			if (mode != null)
-				return mode;
+		if (!modeStale)
+			return mode;
+
+		//Mode is stale, get new mode from server
+		try {
+			//log.debug("Mode is stale for channel " + getName() + ", fetching fresh mode");
+			if (modeLatch == null || modeLatch.getCount() == 0)
+				modeLatch = new CountDownLatch(1);
+			bot.sendRaw().rawLine("MODE " + getName());
+			//Wait for setMode to be called
+			modeLatch.await();
+			//We have known good mode from server, now return
+			return mode;
+		} catch (InterruptedException e) {
+			throw new RuntimeException("Waiting for mode response interrupted", e);
 		}
-
-		log.debug("Pausing channel {} getMode() until server responds with fresh mode", name);
-
-		//While unlikely, mode could be reset. Continuously try
-		int counter = 0;
-		while (true) {
-			log.trace("Attempt #{} to get mode for channel {}", counter++, name);
-			try {
-				CountDownLatch modeWait;
-				synchronized (modeChangeLock) {
-					modeWait = modeChangeLatch;
-				}
-				modeWait.await();
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Waiting for mode response for channel " + name + " interrupted", e);
-			}
-
-			synchronized (modeChangeLock) {
-				if (mode != null)
-					return mode;
-			}
-		}
-	}
-	
-	public boolean containsMode(char modeLetter) {
-		String modeLetters = StringUtils.split(getMode(), ' ')[0];
-		return StringUtils.contains(modeLetters, modeLetter);
 	}
 
 	/**
 	 * Check if the channel has topic protection (+t) set.
-	 *
-	 * @return True if +t
+	 * @return True if +t	
 	 */
 	public boolean hasTopicProtection() {
 		return topicProtection;
@@ -237,7 +203,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Get all levels the user holds in this channel.
-	 *
 	 * @param user The user to get the levels of
 	 * @return An <b>immutable copy</b> of the levels the user holds
 	 */
@@ -246,10 +211,8 @@ public class Channel implements Comparable<Channel> {
 	}
 
 	/**
-	 * Get all users that don't have any special status in this channel. This
-	 * means that they aren't ops, have voice, superops, halops, or owners in
-	 * this channel
-	 *
+	 * Get all users that don't have any special status in this channel. This means
+	 * that they aren't ops, have voice, superops, halops, or owners in this channel
 	 * @return An <b>immutable copy</b> of normal users
 	 */
 	public ImmutableSortedSet<User> getNormalUsers() {
@@ -258,7 +221,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Get all opped users in this channel.
-	 *
 	 * @return An <b>immutable copy</b> of opped users
 	 */
 	public ImmutableSortedSet<User> getOps() {
@@ -267,7 +229,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Get all voiced users in this channel.
-	 *
 	 * @return An <b>immutable copy</b> of voiced users
 	 */
 	public ImmutableSortedSet<User> getVoices() {
@@ -276,7 +237,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Get all users with Owner status in this channel.
-	 *
 	 * @return An <b>immutable copy</b> of users with Owner status
 	 */
 	public ImmutableSortedSet<User> getOwners() {
@@ -285,7 +245,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Get all users with Half Operator status in this channel.
-	 *
 	 * @return An <b>immutable copy</b> of users with Half Operator status
 	 */
 	public ImmutableSortedSet<User> getHalfOps() {
@@ -294,7 +253,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Get all users with Super Operator status in this channel.
-	 *
 	 * @return An <b>immutable copy</b> of users with Super Operator status
 	 */
 	public ImmutableSortedSet<User> getSuperOps() {
@@ -304,40 +262,36 @@ public class Channel implements Comparable<Channel> {
 	/**
 	 * Sets the mode of the channel. If there is a getMode() waiting on this,
 	 * fire it.
-	 *
 	 * @param mode
 	 */
 	protected void setMode(String mode, ImmutableList<String> modeParsed) {
-		synchronized (modeChangeLock) {
-			this.mode = mode;
+		this.mode = mode;
+		this.modeStale = false;
+		if (modeLatch != null)
+			modeLatch.countDown();
 
-			//Parse out mode
-			PeekingIterator<String> params = Iterators.peekingIterator(modeParsed.iterator());
+		//Parse out mode
+		PeekingIterator<String> params = Iterators.peekingIterator(modeParsed.iterator());
 
-			//Process modes letter by letter, grabbing paramaters as needed
-			boolean adding = true;
-			String modeLetters = params.next();
-			for (int i = 0; i < modeLetters.length(); i++) {
-				char curModeChar = modeLetters.charAt(i);
-				if (curModeChar == '+')
-					adding = true;
-				else if (curModeChar == '-')
-					adding = false;
-				else {
-					ChannelModeHandler modeHandler = bot.getConfiguration().getChannelModeHandlers().get(curModeChar);
-					if (modeHandler != null)
-						modeHandler.handleMode(bot, this, null, null, params, adding, false);
-				}
+		//Process modes letter by letter, grabbing paramaters as needed
+		boolean adding = true;
+		String modeLetters = params.next();
+		for (int i = 0; i < modeLetters.length(); i++) {
+			char curModeChar = modeLetters.charAt(i);
+			if (curModeChar == '+')
+				adding = true;
+			else if (curModeChar == '-')
+				adding = false;
+			else {
+				ChannelModeHandler modeHandler = bot.getConfiguration().getChannelModeHandlers().get(curModeChar);
+				if (modeHandler != null)
+					modeHandler.handleMode(bot, this, null, params, adding, false);
 			}
-
-			if (modeChangeLatch != null)
-				modeChangeLatch.countDown();
 		}
 	}
 
 	/**
-	 * Get all users in this channel. }
-	 *
+	 * Get all users in this channel. Simply calls {@link PircBotX#getUsers(org.pircbotx.Channel) }
 	 * @return An <i>Unmodifiable</i> Set of users in this channel
 	 */
 	public ImmutableSortedSet<User> getUsers() {
@@ -345,31 +299,16 @@ public class Channel implements Comparable<Channel> {
 	}
 
 	/**
-	 * Get all the user's nicks in this channel
-	 *
-	 * @return An <i>Unmodifiable</i> Set of user's nicks as String in this
-	 * channel
-	 */
-	public ImmutableSortedSet<String> getUsersNicks() {
-		ImmutableSortedSet.Builder<String> builder = ImmutableSortedSet.naturalOrder();
-		for (User curUser : getDao().getUsers(this))
-			builder.add(curUser.getNick());
-		return builder.build();
-	}
-
-	/**
 	 * Get the user that set the topic. As the user may or may not be in the
 	 * channel return as a string
-	 *
 	 * @return The user that set the topic in String format
 	 */
-	public UserHostmask getTopicSetter() {
+	public String getTopicSetter() {
 		return topicSetter;
 	}
 
 	/**
 	 * Checks if the given user is an Operator in this channel
-	 *
 	 * @return True if the user is an Operator, false if not
 	 */
 	public boolean isOp(User user) {
@@ -378,7 +317,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Checks if the given user has Voice in this channel.
-	 *
 	 * @return True if the user has Voice, false if not
 	 */
 	public boolean hasVoice(User user) {
@@ -387,7 +325,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Checks if the given user is a Super Operator in this channel.
-	 *
 	 * @return True if the user is a Super Operator, false if not
 	 */
 	public boolean isSuperOp(User user) {
@@ -396,7 +333,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Checks if the given user is an Owner in this channel.
-	 *
 	 * @return True if the user is an Owner, false if not
 	 */
 	public boolean isOwner(User user) {
@@ -405,7 +341,6 @@ public class Channel implements Comparable<Channel> {
 
 	/**
 	 * Checks if the given user is a Half Operator in this channel.
-	 *
 	 * @return True if the user is a Half Operator, false if not
 	 */
 	public boolean isHalfOp(User user) {
@@ -413,21 +348,22 @@ public class Channel implements Comparable<Channel> {
 	}
 
 	/**
-	 * Create an immutable snapshot of this channel.
-	 *
+	 * Create an immutable snapshot of this channel. 
 	 * @return Immutable Channel copy minus the DAO
 	 */
 	public ChannelSnapshot createSnapshot() {
+		//if (modeStale)
+			//log.warn("Channel {} mode '{}' is stale", getName(), mode);
 		return new ChannelSnapshot(this, mode);
 	}
 
 	/**
-	 * Compare {@link #getName()} with {@link String#compareToIgnoreCase(java.lang.String)
-	 * }. This is useful for sorting lists of Channel objects.
-	 *
+	 * Compare {@link #getName()} with {@link String#compareToIgnoreCase(java.lang.String) }.
+	 * This is useful for sorting lists of Channel objects.
 	 * @param other Other channel to compare to
 	 * @return the result of calling compareToIgnoreCase on channel names.
 	 */
+        @Override
 	public int compareTo(Channel other) {
 		return getName().compareToIgnoreCase(other.getName());
 	}
