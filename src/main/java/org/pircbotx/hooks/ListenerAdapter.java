@@ -40,6 +40,8 @@ public abstract class ListenerAdapter<T extends PircBotX> implements Listener<T>
 	public void onEvent(Event<T> event) throws Exception {
 		if (event instanceof ActionEvent)
 			onAction((ActionEvent<T>) event);
+                else if (event instanceof AwayEvent)
+			onAway((AwayEvent<T>) event);
 		else if (event instanceof ChannelInfoEvent)
 			onChannelInfo((ChannelInfoEvent<T>) event);
 		else if (event instanceof ConnectEvent)
@@ -143,7 +145,7 @@ public abstract class ListenerAdapter<T extends PircBotX> implements Listener<T>
 		else if (event instanceof VoiceEvent)
 			onVoice((VoiceEvent<T>) event);
 		else if (event instanceof WhoisEvent)
-			onWhois((WhoisEvent<T>) event);
+			onWhois((WhoisEvent<T>) event);                
 
 		//Generic methods
 		if (event instanceof GenericCTCPEvent)
@@ -165,6 +167,9 @@ public abstract class ListenerAdapter<T extends PircBotX> implements Listener<T>
 	}
 
 	public void onAction(ActionEvent<T> event) throws Exception {
+	}
+        
+        public void onAway(AwayEvent<T> event) throws Exception {
 	}
 
 	public void onChannelInfo(ChannelInfoEvent<T> event) throws Exception {

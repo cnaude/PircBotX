@@ -62,6 +62,10 @@ public final class Colors {
 	 * Bold text.
 	 */
 	public static final String BOLD = "\u0002";
+        /**
+	 * Italic text.
+	 */
+	public static final String ITALIC = "\u001d";
 	/**
 	 * Underlined text.
 	 */

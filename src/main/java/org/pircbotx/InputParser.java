@@ -46,6 +46,7 @@ import static org.pircbotx.ReplyConstants.*;
 import org.pircbotx.cap.CapHandler;
 import org.pircbotx.exception.IrcException;
 import org.pircbotx.hooks.events.ActionEvent;
+import org.pircbotx.hooks.events.AwayEvent;
 import org.pircbotx.hooks.events.ChannelInfoEvent;
 import org.pircbotx.hooks.events.ConnectEvent;
 import org.pircbotx.hooks.events.FingerEvent;
@@ -665,15 +666,20 @@ public class InputParser implements Closeable {
             }
         } else if (command.equals("AWAY")) //IRCv3 AWAY notify
         {
-            //IRCv3 AWAY notify
+            String awayMessage;
             if (parsedLine.isEmpty()) {
-                source.setAwayMessage("");
+                awayMessage = "";
             } else {
-                source.setAwayMessage(parsedLine.get(0));
+                awayMessage = parsedLine.get(0);
+            }            
+            if (awayMessage == null) {
+                awayMessage = "";
             }
-        } else // If we reach this point, then we've found something that the PircBotX
-        // Doesn't currently deal with.
-        {
+            
+            source.setAwayMessage(awayMessage);
+
+            configuration.getListenerManager().dispatchEvent(new AwayEvent<>(bot, source, awayMessage));
+        } else {
             configuration.getListenerManager().dispatchEvent(new UnknownEvent<>(bot, line));
         }
     }
@@ -825,7 +831,11 @@ public class InputParser implements Closeable {
             whoisBuilder.put(whoisNick, builder);
         } else if (code == RPL_AWAY) //Example: 301 PircBotXUser TheLQ_ :I'm away, sorry
         {
-            bot.getUserChannelDao().getUser(parsedResponse.get(1)).setAwayMessage(parsedResponse.get(2));
+            String awayMessage = parsedResponse.get(2);
+            if (awayMessage == null) {
+                awayMessage = "";
+            }
+            bot.getUserChannelDao().getUser(parsedResponse.get(1)).setAwayMessage(awayMessage);            
         } else if (code == RPL_WHOISCHANNELS) {
             //Example: 319 TheLQ Plazma :+#freenode
             //Channel list from whois. Re-tokenize since they're after the :
@@ -870,10 +880,8 @@ public class InputParser implements Closeable {
      * Note that this method is private and is not intended to appear in the
      * javadoc generated documentation.
      *
+     * @param user The user object
      * @param target The channel or nick that the mode operation applies to.
-     * @param sourceNick The nick of the user that set the mode.
-     * @param sourceLogin The login of the user that set the mode.
-     * @param sourceHostname The hostname of the user that set the mode.
      * @param mode The mode that has been set.
      */
     public void processMode(User user, String target, String mode) {
