@@ -248,7 +248,7 @@ public class Configuration<B extends PircBotX> {
         /**
          * Allowed channel prefix characters. Defaults to <code>#&+!</code>
          */
-        protected String channelPrefixes = "#&+!";
+        protected String channelPrefixes = "#&+!~";
         //DCC
         /**
          * If true sends filenames in quotes, otherwise uses underscores.

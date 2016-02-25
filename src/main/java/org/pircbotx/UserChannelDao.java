@@ -18,7 +18,6 @@
  */
 package org.pircbotx;
 
-import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableBiMap;
