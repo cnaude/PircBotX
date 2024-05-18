@@ -38,7 +38,7 @@ import org.pircbotx.hooks.types.GenericUserEvent;
 public class NickChangeEvent<T extends PircBotX> extends Event<T> implements GenericUserEvent<T> {
 	protected final String oldNick;
 	protected final String newNick;
-	@Getter(onMethod = @_(@Override))
+	@Getter(onMethod_={@Override})
 	protected final User user;
 
 	/**

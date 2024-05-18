@@ -62,6 +62,7 @@ import org.pircbotx.output.OutputIRC;
  * </ol>
  *
  * @author Leon Blakey <lord.quackstar at gmail.com>
+ * @param <B>
  */
 //@Slf4j
 public class MultiBotManager<B extends PircBotX> {
@@ -229,7 +230,7 @@ public class MultiBotManager<B extends PircBotX> {
         @NonNull
         protected final B bot;
 
-    @Override
+        @Override
         public Void call() throws IOException, IrcException {
             Thread.currentThread().setName("botPool" + managerNumber + "-bot" + bot.getBotId());
             bot.connect();
@@ -244,13 +245,13 @@ public class MultiBotManager<B extends PircBotX> {
         @NonNull
         protected final B bot;
 
-    @Override
+        @Override
         public void onSuccess(Void result) {
             //log.debug("Bot #" + bot.getBotId() + " finished");
             remove();
         }
 
-    @Override
+        @Override
         public void onFailure(Throwable t) {
             //log.error("Bot exited with Exception", t);
             remove();

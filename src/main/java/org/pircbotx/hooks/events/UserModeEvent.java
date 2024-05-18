@@ -35,7 +35,7 @@ import org.pircbotx.hooks.types.GenericUserEvent;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class UserModeEvent<B extends PircBotX> extends Event<B> implements GenericUserEvent<B> {
-	@Getter(onMethod = @_({@Override}))
+	@Getter(onMethod_={@Override})
 	protected final User user;
 	protected final User recipient;
 	protected final String mode;
