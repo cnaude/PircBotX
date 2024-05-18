@@ -39,8 +39,7 @@ import org.pircbotx.hooks.types.GenericUserEvent;
 @EqualsAndHashCode(callSuper = true)
 public class AwayEvent<T extends PircBotX> extends Event<T> implements GenericUserEvent<T> {
 
-    @Getter(onMethod = @_(
-            @Override))
+    @Getter(onMethod_={@Override})
     protected final User user;
     protected final String awayMessage;
 

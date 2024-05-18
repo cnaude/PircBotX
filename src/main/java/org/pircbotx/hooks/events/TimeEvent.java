@@ -42,9 +42,9 @@ import org.pircbotx.hooks.types.GenericCTCPEvent;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TimeEvent<T extends PircBotX> extends Event<T> implements GenericCTCPEvent<T> {
-	@Getter(onMethod = @_(@Override))
+	@Getter(onMethod_={@Override})
 	protected final Channel channel;
-	@Getter(onMethod = @_(@Override))
+	@Getter(onMethod_={@Override})
 	protected final User user;
 	
 

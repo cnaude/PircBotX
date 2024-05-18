@@ -37,9 +37,9 @@ import org.pircbotx.hooks.types.GenericChannelUserEvent;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class JoinEvent<T extends PircBotX> extends Event<T> implements GenericChannelUserEvent<T> {
-	@Getter(onMethod = @_(@Override))
+	@Getter(onMethod_={@Override})
 	protected final Channel channel;
-	@Getter(onMethod = @_(@Override))
+	@Getter(onMethod_={@Override})
 	protected final User user;
 
 	/**

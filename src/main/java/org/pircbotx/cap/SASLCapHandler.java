@@ -72,12 +72,12 @@ public class SASLCapHandler implements CapHandler {
 	}
 
         @Override
-	public boolean handleUnknown(PircBotX bot, String rawLine) throws CAPException {
-		if (rawLine.equals("AUTHENTICATE +")) {
+	public boolean handleUnknown(PircBotX bot, String rawLine) throws CAPException {              
+                if (rawLine.replace("AUTHENTICATE :+", "AUTHENTICATE +").equals("AUTHENTICATE +")) {
 			//Server ackowledges our request to use plain authentication
 			String encodedAuth = Base64.encodeBase64String((username + '\0' + username + '\0' + password).getBytes(Charsets.UTF_8));
 			bot.sendRaw().rawLineNow("AUTHENTICATE " + encodedAuth);
-		}
+		} 
 
 		//Check for 904 and 905 
 		String[] parsedLine = rawLine.split(" ", 4);

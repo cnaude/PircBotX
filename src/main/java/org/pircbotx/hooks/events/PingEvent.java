@@ -43,9 +43,9 @@ import org.pircbotx.hooks.types.GenericCTCPEvent;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class PingEvent<T extends PircBotX> extends Event<T> implements GenericCTCPEvent<T> {
-	@Getter(onMethod = @_(@Override))
+	@Getter(onMethod_={@Override})
 	protected final User user;
-	@Getter(onMethod = @_(@Override))
+	@Getter(onMethod_={@Override})
 	protected final Channel channel;
 	protected final String pingValue;
 

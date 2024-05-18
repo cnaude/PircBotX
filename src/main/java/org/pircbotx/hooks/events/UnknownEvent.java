@@ -35,7 +35,7 @@ import org.pircbotx.PircBotX;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class UnknownEvent<T extends PircBotX> extends Event<T> {
-	@Getter(onMethod = @_({@Nonnull}))
+	@Getter(onMethod_={@Nonnull})
 	protected final String line;
 
 	/**

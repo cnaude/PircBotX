@@ -50,7 +50,7 @@ import org.pircbotx.hooks.types.GenericChannelEvent;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class UserListEvent<B extends PircBotX> extends Event<B> implements GenericChannelEvent<B> {
-	@Getter(onMethod = @_({@Override}))
+	@Getter(onMethod_={@Override})
 	protected final Channel channel;
 	protected final ImmutableSortedSet<User> users;
 
